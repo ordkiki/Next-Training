@@ -2,10 +2,8 @@
 import { useEffect, useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import axios from "axios";
-import Navbar from "@/components/navbar/Navbar";
 import { Input } from "@/components/ui/input";
-import Edit from "../../components/edit_user/edit_user";
-
+import EditUserModal from "../../components/edit_user/edit_user";
 import {
   Table,
   TableBody,
@@ -15,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import {
   Select,
   SelectContent,
@@ -24,119 +21,118 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface user {
-  Id?: number;
-  Nom?: string;
-  Email?: string;
-  Telephone?: string;
+interface User {
+  Id: number;
+  Nom: string;
+  Email: string;
+  Avatar?: string;
 }
+
 const api_url = process.env.NEXT_PUBLIC_SERVER_ENV_API;
 
-export default function Page() {
-  const [editingUser, setEditingUser] = useState<user | null>(null);
-  const HandleFilterUser = async (ID: number) => {
+export default function Liste() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
     try {
-      const res = await axios.put(`http://localhost:5000/user/update/${ID}`);
-      if (res.status === 200)
-        setUserData((prevUsers) => prevUsers.filter((user) => user.id !== ID));
-      console.log("Edition reussi");
-    } catch (error) {
-      console.log(error);
+      const res = await axios.get(`${api_url}/api/utilisateurs/listes`);
+      setUsers(res.data.data);
+    } catch (err) {
+      setError("Failed to fetch users");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
-  const HandleUpdate = () => async (ID: number) => {
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
+    
     try {
-      const res = await axios.put<user>(
-        `http://localhost:5000/user/update/${ID}`
-      );
-      if (res.status === 200)
-        setUserData((prevUsers) => prevUsers.filter((user) => user.id !== ID));
-      console.log("Edition reussi");
-    } catch (error) {
-      console.log(error);
+      await axios.delete(`${api_url}/api/utilisateurs/delete/${id}`);
+      setUsers(prev => prev.filter(user => user.Id !== id));
+    } catch (err) {
+      setError("Failed to delete user");
+      console.error(err);
     }
   };
-  const HandleDelete = async (ID: number) => {
-    if (confirm("Voulez-vous vraiment supprimer ?")) {
-      try {
-        await axios.delete(`http://localhost:5000/user/delete/${ID}`);
-        setUserData((prevUsers) => prevUsers.filter((user) => user.id !== ID));
-      } catch (error) {
-        console.log(error);
-      }
-      console.log("suppression Réussi");
-    }
+  const handleUpdateSuccess = (updatedUser: User) => {
+    setUsers(prevUsers => 
+      prevUsers.map(user => user.Id === updatedUser.Id ? updatedUser : user)
+    );
+    setEditingUser(null); // Ferme le modal après la mise à jour
   };
-  const [userData, setUserData] = useState<user[]>([]);
+
+
+
   useEffect(() => {
-    const FetchUser = async () => {
-      try {
-        const res = await axios.get<user[]>(
-          `${api_url}/api/utilisateurs/listes`
-        );
-        setUserData(res.data.data);
-        console.log(res.data.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    FetchUser();
+    fetchUsers();
   }, []);
 
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
   return (
-    <div className="">
-      <div className="p-8 ">
-        <div className="mb-4 flex justify-between">
-          <Select>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Trier par" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="id">ID</SelectItem>
-              <SelectItem value="nom">Nom</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="p-8">
+      <div className="mb-4 flex justify-between">
+        <Select>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Trier par" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Id">ID</SelectItem>
+            <SelectItem value="Nom">Nom</SelectItem>
+            <SelectItem value="Email">Email</SelectItem>
+          </SelectContent>
+        </Select>
 
-          <div className="flex">
-            <Input
-              type="text"
-              placeholder="rechercher l'utilisateur"
-              name="search"
-              className="w-[25vw] border rounded-none outline-none"
-            />
-            <button className="p-1 border hover:bg-blue-600 text-blue-600 hover:border-blue-600 hover:text-white transition border-blue-600 ">
-              rechercher
-            </button>
-          </div>
+        <div className="flex">
+          <Input
+            type="text"
+            placeholder="Rechercher l'utilisateur"
+            className="w-[25vw] border rounded-none outline-none"
+          />
+          <button className="p-1 border hover:bg-blue-600 text-blue-600 hover:border-blue-600 hover:text-white transition border-blue-600">
+            Rechercher
+          </button>
         </div>
-        <Table>
-          <TableCaption>Ajoutez plus d'utilisateurs</TableCaption>
+      </div>
 
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Nom d'utilisateurs</TableHead>
-              <TableHead>Id</TableHead>
-              <TableHead>Adresse Email</TableHead>
-              <TableHead className="text-right">Telephone</TableHead>
-              <TableHead className="text-right">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          {userData.map((data, index) => (
-            <TableRow key={data.Id ?? index}>
-              <TableCell className="font-medium">{data.Nom}</TableCell>
-              <TableCell>{data.Id}</TableCell>
-              <TableCell>{data.Email}</TableCell>
-              <TableCell className="text-right">{data.telephone}</TableCell>
+      <Table>
+        <TableCaption>Liste des utilisateurs</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nom</TableHead>
+            <TableHead>ID</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead className="text-right">Avatar</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.Id}>
+              <TableCell>{user.Nom}</TableCell>
+              <TableCell>{user.Id}</TableCell>
+              <TableCell>{user.Email}</TableCell>
+              <TableCell className="text-right">
+                {user.Avatar ? "Yes" : "No"}
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-4">
                   <button
+                    onClick={() => setEditingUser(user)}
                     className="text-blue-500 hover:text-blue-700 transition-colors"
                     aria-label="Modifier"
                   >
                     <FaEdit size={18} />
                   </button>
                   <button
+                    onClick={() => handleDelete(user.Id)}
                     className="text-red-500 hover:text-red-700 transition-colors"
                     aria-label="Supprimer"
                   >
@@ -146,12 +142,17 @@ export default function Page() {
               </TableCell>
             </TableRow>
           ))}
-        </Table>
-      </div>
+        </TableBody>
+      </Table>
 
       {editingUser && (
-        <div className="fixed top-0 left-0 w-screen h-screen flex justify-center items-center bg-[rgba(0,0,0,0.2)]">
-          <Edit></Edit>
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.2)] bg-opacity-50 flex justify-center items-center">
+          <EditUserModal
+            user={editingUser}
+            onClose={() => setEditingUser(null)}
+            onSuccess={handleUpdateSuccess}
+            apiUrl={api_url}
+          />
         </div>
       )}
     </div>

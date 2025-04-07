@@ -6,8 +6,9 @@ import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 interface FormData {
   nom?: string;
   email?: string;
-  telephone?: number;
+  Avatar?: string;
 }
+const api_url = process.env.NEXT_PUBLIC_SERVER_ENV_API;
 
 export default function Page() {
   const [formData, setFormData] = useState<FormData>({});
