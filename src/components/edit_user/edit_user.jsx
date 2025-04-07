@@ -1,39 +1,14 @@
-"use client"; // Ajoutez cette directive en haut du fichier
+import React from 'react'
 
-import Navbar from "@/components/navbar/Navbar";
-import { useState, ChangeEvent, FormEvent, useEffect } from "react";
-
-interface FormData {
-  nom?: string;
-  email?: string;
-  telephone?: number;
-}
-
-export default function Page() {
-  const [formData, setFormData] = useState<FormData>({});
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    console.log("Données soumises :", formData);
-  };
-
+function Edit() {
   return (
-    <div className="">
-      <div className="flex justify-center items-center w-screen h-[80vh]">
+    <div className='w-[50vw] h-[70vh] fixed bg-white flex justify-center items-center shadow rounded-2xl'>
         <form
-          onSubmit={handleSubmit}
+        //   onSubmit={handleSubmit}
           className="h-fit p-4 border w-[28vw] rounded"
         >
           <h1 className="font-bold mb-4">
-            Insertion dans la liste d'utilisateurs :
+            Mis a jours d'utilisateurs :
           </h1>
 
           <div className="mb-4">
@@ -42,8 +17,8 @@ export default function Page() {
               name="nom"
               className="border w-[25vw] p-2 rounded-lg"
               placeholder="nom d'utilisateur"
-              onChange={handleChange}
-              value={formData.nom || ""}
+            //   onChange={handleChange}
+            //   value={formData.nom || ""}
             />
           </div>
 
@@ -53,8 +28,8 @@ export default function Page() {
               name="email"
               placeholder="adresse email"
               className="mb-4 border w-[25vw] p-2 rounded-lg"
-              onChange={handleChange}
-              value={formData.email || ""}
+            //   onChange={handleChange}
+            //   value={formData.email || ""}
             />
           </div>
           <div className="">
@@ -63,8 +38,8 @@ export default function Page() {
               name="telephone"
               placeholder="telephone"
               className="mb-4 border w-[25vw] p-2 rounded-lg"
-              onChange={handleChange}
-              value={formData.telephone || ""}
+            //   onChange={handleChange}
+            //   value={formData.telephone || ""}
             />
           </div>
 
@@ -75,7 +50,8 @@ export default function Page() {
             Inserer
           </button>
         </form>
-      </div>
     </div>
-  );
+  )
 }
+
+export default Edit;
